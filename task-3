@@ -1,0 +1,75 @@
+import tkinter as tk
+import time
+
+class StopwatchApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Stopwatch")
+
+        self.is_running = False
+        self.start_time = None
+        self.elapsed_time = 0
+
+        # Display for time (minutes:seconds.milliseconds)
+        self.time_label = tk.Label(root, text="00:00.00", font=("Helvetica", 48), width=10)
+        self.time_label.grid(row=0, column=0, columnspan=3)
+
+        # Start button
+        self.start_button = tk.Button(root, text="Start", font=("Helvetica", 14), command=self.start_stop)
+        self.start_button.grid(row=1, column=0)
+
+        # Pause button
+        self.pause_button = tk.Button(root, text="Pause", font=("Helvetica", 14), command=self.pause)
+        self.pause_button.grid(row=1, column=1)
+
+        # Restart button
+        self.restart_button = tk.Button(root, text="Restart", font=("Helvetica", 14), command=self.restart)
+        self.restart_button.grid(row=1, column=2)
+
+        self.update_clock()
+
+    def update_clock(self):
+        if self.is_running:
+            elapsed = self.elapsed_time + (time.time() - self.start_time)
+        else:
+            elapsed = self.elapsed_time
+
+        minutes = int(elapsed // 60)
+        seconds = int(elapsed % 60)
+        milliseconds = int((elapsed * 100) % 100)
+
+        time_display = f"{minutes:02}:{seconds:02}.{milliseconds:02}"
+        self.time_label.config(text=time_display)
+
+        self.root.after(10, self.update_clock)
+
+    def start_stop(self):
+        if not self.is_running:
+            self.start_time = time.time() - self.elapsed_time
+            self.is_running = True
+            self.start_button.config(text="Stop")
+        else:
+            self.elapsed_time = time.time() - self.start_time
+            self.is_running = False
+            self.start_button.config(text="Start")
+
+    def pause(self):
+        if self.is_running:
+            self.elapsed_time = time.time() - self.start_time
+            self.is_running = False
+            self.start_button.config(text="Start")
+
+    def restart(self):
+        self.elapsed_time = 0
+        if not self.is_running:
+            self.time_label.config(text="00:00.00")
+        else:
+            self.start_time = time.time()
+
+def main():
+    root = tk.Tk()
+    stopwatch_app = StopwatchApp(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
