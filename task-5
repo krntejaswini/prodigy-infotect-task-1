@@ -1,0 +1,65 @@
+package com.example.qrcodescanner
+
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import com.google.mlkit.vision.barcode.Barcode
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var resultTextView: TextView
+    private lateinit var scanButton: Button
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        resultTextView = findViewById(R.id.resultTextView)
+        scanButton = findViewById(R.id.scanButton)
+
+        scanButton.setOnClickListener {
+            scanQrCode()
+        }
+    }
+
+    private val scanLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        bitmap?.let {
+            val image = InputImage.fromBitmap(it, 0)
+            val scanner = BarcodeScanning.getClient()
+
+            scanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    if (barcodes.isNotEmpty()) {
+                        val barcode = barcodes[0]
+                        handleScannedData(barcode)
+                    } else {
+                        resultTextView.text = "No QR code detected."
+                    }
+                }
+                .addOnFailureListener {
+                    resultTextView.text = "Failed to scan QR code."
+                }
+        }
+    }
+
+    private fun scanQrCode() {
+        scanLauncher.launch(null)
+    }
+
+    private fun handleScannedData(barcode: Barcode) {
+        val value = barcode.rawValue
+        resultTextView.text = value
+
+        value?.let {
+            if (it.startsWith("http://") || it.startsWith("https://")) {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(it))
+                startActivity(intent)
+            }
+        }
+    }
+}
